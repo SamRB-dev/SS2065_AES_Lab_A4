@@ -14,3 +14,20 @@ Sensors:
 
 Protocols: MQTT
 
+
+### Project Progress Checklist
+
+- [ ] Requirement Analysis (diagrams)
+- [ ] Data Storage: SQLite
+- [ ] MQTT Borker: Python
+- [ ] MQTT Publisher: C++
+    #### publisher topic suggestion: 
+    - [ ] sensor/ky-015/temperature/data
+    - [ ] sensor/ky-015/humidity/data
+    - [ ] sensor/ky-018/photoresistor/data
+    - [ ] sensor/ky-037/microphone/data
+- [ ] Data Presentation: Web App or Mobile App
+
+### Resources 
+
+[HiveMQ](https://www.hivemq.com/blog/implementing-mqtt-in-python/)
