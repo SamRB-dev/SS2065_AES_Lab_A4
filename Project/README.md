@@ -1,13 +1,38 @@
-Room Monitor
+<div align="center">
+  <img src="https://readme-typing-svg.demolab.com?font=Share+Tech+Mono&weight=700&size=40&pause=1000&color=00FF88&background=00000000&center=true&width=650&lines=Smart+Room+Monitoring+System" alt="Typing SVG" />
+</div>
+
 The system monitors the comfort level of a room by measuring temperature, humidity, light level, noise level, and possible occupancy/distance. The collected data will be sent to a web or mobile dashboard where users can see the current room status.
-Hardware:
-- 1 Arduino / ESP32 per sensor
-- 1 Raspberry Pi or laptop for running the service, MQTT broker, and dashboard
 
-Sensors:
-- KY-015 Combi Sensor (Temperature & Humidity)
-- KY-018 Photoresistor
-- KY-037 or KY-038 Microphone Sound Sensor
+### Hardwares
+- ESP32 per sensor x1
+- Raspberry Pi 3 Model B v2 x1
 
-Protocols: MQTT
+#### Sensors:
+- KY-015 Combi Sensor (Temperature & Humidity) x1
+- KY-018 Photoresistor x2
+- KY-037 or KY-038 Microphone Sound Sensor x1
 
+#### Protocols: MQTT
+
+
+### Project Progress Checklist
+
+- [ ] Requirement Analysis (diagrams)
+- [ ] Data Storage: SQLite
+- [ ] MQTT Borker: Python
+- [ ] MQTT Publisher: C++
+    #### publisher topic suggestion: 
+    - [ ] sensor/ky-015/temperature/data
+    - [ ] sensor/ky-015/humidity/data
+    - [ ] sensor/ky-018/photoresistor/data
+    - [ ] sensor/ky-037/microphone/data
+- [ ] Data Presentation: Web App or Mobile App
+
+### Resources 
+
+[HiveMQ](https://www.hivemq.com/blog/implementing-mqtt-in-python/)
+
+[Py paho-mqtt](https://www.emqx.com/en/blog/how-to-use-mqtt-in-python)
+
+[HiveMQ Security](https://www.hivemq.com/blog/mqtt-security-fundamentals-securing-mqtt-systems/) <- *IMPORTANT*
