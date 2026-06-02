@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Share+Tech+Mono&weight=700&size=45&pause=1000&color=00FF88&background=00000000&center=true&width=650&lines=Smart+Room+Monitoring+System" alt="Typing SVG" />
+  <img src="https://readme-typing-svg.demolab.com?font=Share+Tech+Mono&weight=700&size=42&pause=1000&color=00FF88&background=00000000&center=true&width=650&lines=Smart+Room+Monitoring+System" alt="Typing SVG" />
 </div>
 
 The system monitors the comfort level of a room by measuring temperature, humidity, light level, noise level, and possible occupancy/distance. The collected data will be sent to a web or mobile dashboard where users can see the current room status.
