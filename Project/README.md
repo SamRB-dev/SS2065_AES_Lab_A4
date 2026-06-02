@@ -34,3 +34,5 @@ The system monitors the comfort level of a room by measuring temperature, humidi
 [HiveMQ](https://www.hivemq.com/blog/implementing-mqtt-in-python/)
 
 [Py paho-mqtt](https://www.emqx.com/en/blog/how-to-use-mqtt-in-python)
+
+[HiveMQ Security](https://www.hivemq.com/blog/mqtt-security-fundamentals-securing-mqtt-systems/) <- *IMPORTANT*
