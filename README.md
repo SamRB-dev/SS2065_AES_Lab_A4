@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Share+Tech+Mono&weight=700&size=42&pause=1000&color=00FF88&background=00000000&center=true&width=650&lines=Advanced+Embedded+Systems" alt="Typing SVG" />
+  <img src="https://readme-typing-svg.demolab.com?font=Share+Tech+Mono&weight=700&size=40&pause=1000&color=00FF88&background=00000000&center=true&width=650&lines=Advanced+Embedded+Systems" alt="Typing SVG" />
 </div>
 
 ## A4 Team Members
