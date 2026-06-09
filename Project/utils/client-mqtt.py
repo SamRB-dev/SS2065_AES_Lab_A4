@@ -1,23 +1,40 @@
-#! /usr/bin/env python3
+import paho.mqtt.client as mqtt_client
+import sys
 
-# Import modules
-try:
-    import paho.mqtt.client
-except ImportError as e:
-    print(f"{e}")
-    
-# Create MQTT client
-client = paho.mqtt.client.Client(
-    client_id="test-client",
-    userdata=None,
-    protocol=paho.mqtt.client.MQTTv5,
-)
+BROKER = "broker.hivemq.com"
+PORT   = 1883
+TOPIC  = "sensor/ky-018/photoresistor/data"
 
-# Enable TLS
-client.tls_set(tls_version=paho.mqtt.client.ssl.PROTOCOL_TLS)
+def on_connect(client, userdata, flags, status_code):
+    if status_code == 0:
+        print("Connected to MQTT Broker")
+        client.subscribe(TOPIC, qos=1)
+        print(f"Subscribed to: {TOPIC}")
+    else:
+        print(f"Connection Failed with code: {status_code}")
 
-# Connect to the broker
-client.connect("broker.hivemq.com", 8883)
+def on_message(client, userdata, msg):
+    print(f"[{msg.topic}] {msg.payload.decode('utf-8')}")
 
-# Connection
- 
+def on_disconnect(client, userdata, rc):
+    if rc != 0:
+        print(f"Unexpected disconnection. Reconnecting...")
+
+def connect_mqtt():
+    subscriber = mqtt_client.Client(client_id="room-monitor-sub-001")
+    subscriber.on_connect    = on_connect
+    subscriber.on_message    = on_message
+    subscriber.on_disconnect = on_disconnect
+    subscriber.connect(BROKER, PORT, keepalive=60)
+    return subscriber
+
+if __name__ == "__main__":
+    try:
+        client = connect_mqtt()
+        client.loop_forever()
+    except KeyboardInterrupt:
+        print("Disconnecting...")
+        client.disconnect()
+        sys.exit(0)
+    except Exception as e:
+        print(f"Error: {e}")
