@@ -3,7 +3,7 @@ import sys
 
 BROKER = "broker.hivemq.com"
 PORT   = 1883
-TOPIC  = "sensor/ky-018/photoresistor/data"
+TOPIC  = "sensor/ky-037/microphone/data"
 
 def on_connect(client, userdata, flags, status_code):
     if status_code == 0:
