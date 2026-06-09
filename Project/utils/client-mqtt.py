@@ -1,23 +1,34 @@
-#! /usr/bin/env python3
+from paho.mqtt import client 
+import os, sys, logging
 
-# Import modules
-try:
-    import paho.mqtt.client
-except ImportError as e:
-    print(f"{e}")
+broker =  "broker.hivemq.com"
+port = 1883
+topic = "test/topic"
+
+def connect_mqtt() -> client:
+    def on_connect(client, userdata, flags, status_code):
+        if status_code == 0:
+            print("Connected to MQTT")
+        else:
+            print(f"Connection Failed: {status_code}")
+    subscriber = client.Client()
+    subscriber.on_connect = on_connect
+    subscriber.connect(broker, port)
+    return subscriber
+
+def subscribe(client: client):
+    def on_message(client, userdata, msg):
+        print(msg.payload.decode())
+    client.subscribe(topic)
+    client.on_message = on_message
     
-# Create MQTT client
-client = paho.mqtt.client.Client(
-    client_id="test-client",
-    userdata=None,
-    protocol=paho.mqtt.client.MQTTv5,
-)
-
-# Enable TLS
-client.tls_set(tls_version=paho.mqtt.client.ssl.PROTOCOL_TLS)
-
-# Connect to the broker
-client.connect("broker.hivemq.com", 8883)
-
-# Connection
- 
+    
+if __name__ == "__main__":
+    try:
+        client = connect_mqtt()
+        subscribe(client)
+        client.loop_forever()
+    except KeyboardInterrupt:
+        sys.exit(0)
+    except Exception as e:
+        print(e)
