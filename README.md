@@ -5,7 +5,7 @@
 ## A4 Team Members
 
 * [Andrey Sysoev]()
-* [Sadim Rahman Badhan]()
+* [SamRB-dev](https://github.com/SamRB-dev/)
 * [Md Mamun Hossain]()
 * [Umut karakaya]()
 
