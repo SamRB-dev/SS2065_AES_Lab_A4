@@ -19,12 +19,11 @@ The system monitors the comfort level of a room by measuring temperature, humidi
 ### Project Progress Checklist
 
 - [ ] Requirement Analysis (diagrams)
-- [ ] Connect to Data Storage: SQLite
+- [x] Connect to Data Storage: SQLite
 - [x] MQTT Subscriber: Python
-- [ ] MQTT Publisher: C++
+- [x] MQTT Publisher: C++
     #### publisher topic suggestion: 
-    - [x] sensor/ky-015/temperature/data
-    - [x] sensor/ky-015/humidity/data
+    - [x] sensor/ky-015/temperature-humidity/data
     - [x] sensor/ky-018/photoresistor/data
     - [x] sensor/ky-037/microphone/data
 - [ ] Data Presentation: Web App or Mobile App
