@@ -19,14 +19,13 @@ The system monitors the comfort level of a room by measuring temperature, humidi
 ### Project Progress Checklist
 
 - [ ] Requirement Analysis (diagrams)
-- [ ] Data Storage: SQLite
-- [ ] MQTT Borker: Python
-- [ ] MQTT Publisher: C++
+- [x] Connect to Data Storage: SQLite
+- [x] MQTT Subscriber: Python
+- [x] MQTT Publisher: C++
     #### publisher topic suggestion: 
-    - [ ] sensor/ky-015/temperature/data
-    - [ ] sensor/ky-015/humidity/data
-    - [ ] sensor/ky-018/photoresistor/data
-    - [ ] sensor/ky-037/microphone/data
+    - [x] sensor/ky-015/temperature-humidity/data
+    - [x] sensor/ky-018/photoresistor/data
+    - [x] sensor/ky-037/microphone/data
 - [ ] Data Presentation: Web App or Mobile App
 
 ### Resources 
@@ -35,4 +34,29 @@ The system monitors the comfort level of a room by measuring temperature, humidi
 
 [Py paho-mqtt](https://www.emqx.com/en/blog/how-to-use-mqtt-in-python)
 
+[Paho-mqtt Documentation](https://eclipse.dev/paho/files/paho.mqtt.python/html/client.html#paho.mqtt.client.Client.connect)
+
+
 [HiveMQ Security](https://www.hivemq.com/blog/mqtt-security-fundamentals-securing-mqtt-systems/) <- *IMPORTANT*
+
+# Run the Project
+### Create Virtual Environment
+```shell
+python3 -m venv .venv
+```
+
+### Activate .venv
+```shell
+source .venv/bin/activate
+```
+
+### Install Dependencies
+```shell
+pip install -r requirements.txt
+```
+
+### Run 
+```shell
+cd Projects/src/client/
+python3 RoomMonitorClient.py
+```

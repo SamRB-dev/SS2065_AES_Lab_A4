@@ -1,9 +1,9 @@
 import paho.mqtt.client as mqtt_client
 import sys
 
-BROKER = "broker.hivemq.com"
+BROKER = "test.mosquitto.org" # "broker.hivemq.com"
 PORT   = 1883
-TOPIC  = "sensor/ky-037/microphone/data"
+TOPIC  = "$SYS/#" # "sensor/ky-037/microphone/data"
 
 def on_connect(client, userdata, flags, status_code):
     if status_code == 0:
@@ -30,11 +30,11 @@ def connect_mqtt():
 
 if __name__ == "__main__":
     try:
-        client = connect_mqtt()
-        client.loop_forever()
+        mqttclient = connect_mqtt()
+        mqttclient.loop_forever()
     except KeyboardInterrupt:
         print("Disconnecting...")
-        client.disconnect()
+        mqttclient.disconnect()
         sys.exit(0)
     except Exception as e:
         print(f"Error: {e}")
