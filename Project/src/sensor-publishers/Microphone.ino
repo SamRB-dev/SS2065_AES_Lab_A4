@@ -4,8 +4,8 @@
 
 #define MICROPHONE_PIN A0
 
-char ssid[] = "Sadim Rahman's S25 Ultra";
-char pass[] = "1234567890";
+char ssid[] = "AndreySysoev";
+char pass[] = "12345678";
 
 
 WiFiClient wifiClient;
@@ -90,17 +90,21 @@ void loop() {
     noisePercentage = map(amplitude, 0, 20, 0, 100);
     noisePercentage = constrain(noisePercentage, 0, 100);
 
-    
+
     mqttClient.beginMessage(topic);
-    mqttClient.print("{\"NoisePercentage\":");
+
+    mqttClient.print("{\"noise\":");
     mqttClient.print(noisePercentage);
     mqttClient.print("}");
 
     mqttClient.endMessage();
 
+    Serial.print("Noise: ");
+    Serial.print(noisePercentage);
+    Serial.println("%");
+
     Serial.print("Data sent to topic: ");
     Serial.println(topic);
     Serial.println();
-    
   }
 }
