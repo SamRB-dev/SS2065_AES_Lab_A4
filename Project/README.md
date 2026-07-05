@@ -55,8 +55,14 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### Run 
+### Run the Client
 ```shell
 cd Projects/src/client/
 python3 RoomMonitorClient.py
+```
+
+### Run the Dashboard
+```shell
+cd Projects/src/dashboard
+python3 Flask-Server.py
 ```
