@@ -1,11 +1,11 @@
 #include <ArduinoMqttClient.h>
-#include <WiFiNINA.h>
+#include <WiFi.h>
 
 
-#define RESISTOR_PIN A5
+#define RESISTOR_PIN 34
 
-char ssid[] = "Sadim Rahman's S25 Ultra";
-char pass[] = "1234567890";
+char ssid[] = "AndreySysoev";
+char pass[] = "12345678";
 
 
 WiFiClient wifiClient;
@@ -21,26 +21,36 @@ unsigned long previousMillis = 0;
 
 // Sensor Specific variable
 int rawValue;
-float resistance;
-float voltage;
+int brightness;
 
 void setup() {
   Serial.begin(9600);
+  delay(1000);
 
-  while (!Serial) {
-    ;
-  }
+  Serial.println();
+  Serial.println("ESP32 KY-018 Photoresistor MQTT Publisher");
+  Serial.println();
+
+  pinMode(RESISTOR_PIN, INPUT);
 
   Serial.print("Attempting to connect to SSID: ");
   Serial.println(ssid);
 
-  while (WiFi.begin(ssid, pass) != WL_CONNECTED) {
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect(true);
+  delay(1000);
+
+  WiFi.begin(ssid, pass);
+
+  while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
-    delay(5000);
+    delay(1000);
   }
 
   Serial.println();
   Serial.println("You're connected to the network");
+  Serial.print("ESP32 IP address: ");
+  Serial.println(WiFi.localIP());
   Serial.println();
 
   Serial.print("Attempting to connect to the MQTT broker: ");
@@ -68,17 +78,26 @@ void loop() {
 
     // Sensor specific code
     rawValue = analogRead(RESISTOR_PIN);
-    voltage = rawValue * (5.0/1023) * 1000;     
-    resistance = 10000 * (voltage / (5000.0 - voltage));
 
-    
+    // ESP32 analog range is 0 - 4095
+    brightness = map(rawValue, 0, 4095, 0, 100);
+    brightness = constrain(brightness, 0, 100);
+
+
     mqttClient.beginMessage(topic);
 
-    mqttClient.print("{\"Resistance\":");
-    mqttClient.print(resistance);
+    mqttClient.print("{\"brightness\":");
+    mqttClient.print(brightness);
     mqttClient.print("}");
 
     mqttClient.endMessage();
+
+    Serial.print("Raw value: ");
+    Serial.println(rawValue);
+
+    Serial.print("Brightness: ");
+    Serial.print(brightness);
+    Serial.println("%");
 
     Serial.print("Data sent to topic: ");
     Serial.println(topic);
