@@ -1,13 +1,13 @@
 #include <ArduinoMqttClient.h>
 #include <WiFiNINA.h>
-#include "arduino_secrets.h"
 #include <DHT.h>
+
 
 #define DHTPIN 2
 #define DHTTYPE DHT11
 
-char ssid[] = SECRET_SSID;
-char pass[] = SECRET_PASS;
+char ssid[] = "AndreySysoev";
+char pass[] = "12345678";
 
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -17,10 +17,14 @@ MqttClient mqttClient(wifiClient);
 const char broker[] = "broker.hivemq.com";
 int port = 1883;
 
-const char topic[] = "smart-home-system/sensor/data";
+const char topic[] = "sensor/ky-015/temperature-humidity/data";
 
 const long interval = 5000;
 unsigned long previousMillis = 0;
+
+// Sensor Specific variable
+float temperature;
+float humidity;
 
 void setup() {
   Serial.begin(9600);
@@ -64,21 +68,16 @@ void loop() {
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
 
-    float temperature = dht.readTemperature();
-    float humidity = dht.readHumidity();
+
+    // Sensor specific code
+    temperature = dht.readTemperature();
+    humidity = dht.readHumidity();
 
     if (isnan(temperature) || isnan(humidity)) {
       Serial.println("Failed to read from DHT11 sensor!");
       return;
     }
 
-    Serial.print("Temperature: ");
-    Serial.print(temperature);
-    Serial.println(" C");
-
-    Serial.print("Humidity: ");
-    Serial.print(humidity);
-    Serial.println(" %");
 
     mqttClient.beginMessage(topic);
 
@@ -89,6 +88,14 @@ void loop() {
     mqttClient.print("}");
 
     mqttClient.endMessage();
+
+    Serial.print("Temperature: ");
+    Serial.print(temperature);
+    Serial.println(" C");
+
+    Serial.print("Humidity: ");
+    Serial.print(humidity);
+    Serial.println(" %");
 
     Serial.print("Data sent to topic: ");
     Serial.println(topic);
