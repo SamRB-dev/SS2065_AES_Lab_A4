@@ -96,9 +96,6 @@ def api_current():
     light_ts, light_raw = latest_light(cursor)
     noise_ts, noise_raw = latest_noise(cursor)
 
-    light_min, light_max = historical_range(cursor, "photoresistor_readings", "light_intensity")
-    noise_min, noise_max = historical_range(cursor, "microphone_readings", "sound_level")
-
     conn.close()
 
     th_status, th_seconds = compute_status(th_ts)
@@ -114,19 +111,19 @@ def api_current():
             "timestamp": th_ts
         },
         "light": {
-            "voltage": light_raw,
-            "percentage": to_percentage(light_raw, light_min, light_max),
-            "range_min": light_min,
-            "range_max": light_max,
+            "value": light_raw,
+            "percentage": light_raw,
+            "range_min": 0,
+            "range_max": 100,
             "status": light_status,
             "seconds_ago": light_seconds,
             "timestamp": light_ts
         },
         "noise": {
-            "voltage": noise_raw,
-            "percentage": to_percentage(noise_raw, noise_min, noise_max),
-            "range_min": noise_min,
-            "range_max": noise_max,
+            "value": noise_raw,
+            "percentage": noise_raw,
+            "range_min": 0,
+            "range_max": 100,
             "status": noise_status,
             "seconds_ago": noise_seconds,
             "timestamp": noise_ts
@@ -303,15 +300,15 @@ DASHBOARD_HTML = """
   <div class="side-stack">
     <div class="compact-card">
       <div class="compact-label">Light Intensity</div>
-      <div class="compact-value" id="val-light">-- V</div>
-      <div class="zone-endpoints" id="zone-light-endpoints"><span>-- V</span><span>-- V</span></div>
+      <div class="compact-value" id="val-light">-- %</div>
+      <div class="zone-endpoints" id="zone-light-endpoints"><span>0 %</span><span>100 %</span></div>
       <div class="zone-track"><div class="zone low"></div><div class="zone mid"></div><div class="zone high"></div><div class="zone-marker" id="marker-light" style="left:0%;"></div></div>
       <div class="compact-status" id="status-light"><div class="dot-status"></div> <span id="status-light-text">Waiting for data</span></div>
     </div>
     <div class="compact-card">
       <div class="compact-label">Sound Level</div>
-      <div class="compact-value" id="val-noise">-- V</div>
-      <div class="zone-endpoints" id="zone-noise-endpoints"><span>-- V</span><span>-- V</span></div>
+      <div class="compact-value" id="val-noise">-- %</div>
+      <div class="zone-endpoints" id="zone-noise-endpoints"><span>0 %</span><span>100 %</span></div>
       <div class="zone-track"><div class="zone low"></div><div class="zone mid"></div><div class="zone high"></div><div class="zone-marker" id="marker-noise" style="left:0%;"></div></div>
       <div class="compact-status" id="status-noise"><div class="dot-status"></div> <span id="status-noise-text">Waiting for data</span></div>
     </div>
@@ -351,7 +348,7 @@ DASHBOARD_HTML = """
     </div>
 
   </div>
-  <div class="stats-note">For Light and Sound, the lowest voltage corresponds to the brightest or loudest reading, since both sensors work on an inverted scale. Refer to the sensor cards above for the plain-language reading.</div>
+  <div class="stats-note">Light and Sound are displayed as normalized relative sensor values from 0 to 100%, not as calibrated physical measurements.</div>
 </div>
 
 <div class="units-strip">
@@ -363,13 +360,13 @@ DASHBOARD_HTML = """
     </div>
     <div>
       <h3><span class="swatch" style="background:var(--amber);"></span>Light Intensity</h3>
-      <p>The KY-018 outputs a voltage that falls as light increases. Lower voltage means brighter, higher means darker.</p>
-      <div class="example">e.g. low voltage &rarr; well-lit room. High voltage &rarr; near darkness.</div>
+      <p>The KY-018 reading is normalized in the sensor code to a relative brightness value from 0 to 100%.</p>
+      <div class="example">e.g. higher percentage &rarr; brighter light level.</div>
     </div>
     <div>
       <h3><span class="swatch" style="background:var(--red);"></span>Sound Level</h3>
-      <p>The KY-037 outputs an inverted voltage. Lower voltage means louder, higher means quieter.</p>
-      <div class="example">e.g. low voltage &rarr; a loud clap. High voltage &rarr; near silence.</div>
+      <p>The KY-037 reading is normalized in the sensor code to a relative noise level from 0 to 100%.</p>
+      <div class="example">e.g. higher percentage &rarr; louder sound level.</div>
     </div>
   </div>
 </div>
@@ -429,13 +426,13 @@ DASHBOARD_HTML = """
       if (th.status !== "danger") { onlineCount++; anyLive = true; }
 
       const light = data.light;
-      if (light.voltage !== null) {
-        document.getElementById("val-light").textContent = `${light.voltage} V`;
+      if (light.value !== null) {
+        document.getElementById("val-light").textContent = `${light.value} %`;
         document.getElementById("zone-light-endpoints").innerHTML =
-          `<span>${light.range_min} V</span><span>${light.range_max} V</span>`;
+          `<span>${light.range_min} %</span><span>${light.range_max} %</span>`;
         document.getElementById("marker-light").style.left = `${light.percentage ?? 0}%`;
         if (light.timestamp !== lastSeenLight) {
-          logEvent(`Light reading received, ${light.voltage} V`);
+          logEvent(`Light reading received, ${light.value} %`);
           lastSeenLight = light.timestamp;
         }
       }
@@ -443,13 +440,13 @@ DASHBOARD_HTML = """
       if (light.status !== "danger") { onlineCount++; anyLive = true; }
 
       const noise = data.noise;
-      if (noise.voltage !== null) {
-        document.getElementById("val-noise").textContent = `${noise.voltage} V`;
+      if (noise.value !== null) {
+        document.getElementById("val-noise").textContent = `${noise.value} %`;
         document.getElementById("zone-noise-endpoints").innerHTML =
-          `<span>${noise.range_min} V</span><span>${noise.range_max} V</span>`;
+          `<span>${noise.range_min} %</span><span>${noise.range_max} %</span>`;
         document.getElementById("marker-noise").style.left = `${noise.percentage ?? 0}%`;
         if (noise.timestamp !== lastSeenNoise) {
-          logEvent(`Sound reading received, ${noise.voltage} V`);
+          logEvent(`Sound reading received, ${noise.value} %`);
           lastSeenNoise = noise.timestamp;
         }
       }
@@ -474,8 +471,8 @@ DASHBOARD_HTML = """
     const rows = [
       ["Temperature", data.temperature, "\u00b0C"],
       ["Humidity",    data.humidity,    "%"],
-      ["Light",       data.light,       "V"],
-      ["Sound",       data.noise,       "V"],
+      ["Light",       data.light,       "%"],
+      ["Sound",       data.noise,       "%"],
     ];
     rows.forEach(([name, vals, unit]) => {
       const tr = document.createElement("tr");
