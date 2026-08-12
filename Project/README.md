@@ -17,7 +17,7 @@ The project includes:
 
 ---
 
-## System Architecture
+### System Architecture
 
 ```text
                     MQTT
@@ -37,11 +37,11 @@ The MQTT interface is shared between the original hardware implementation and th
 
 ---
 
-## Physical Implementation
+### Physical Implementation
 
 The original prototype uses multiple microcontrollers as independent sensor publishers.
 
-### Hardware
+#### Hardware
 
 | Component | Quantity | Purpose |
 |---|---:|---|
@@ -52,7 +52,7 @@ The original prototype uses multiple microcontrollers as independent sensor publ
 | KY-018 | 2 | Ambient light sensing |
 | KY-037 / KY-038 | 1 | Sound / noise sensing |
 
-### Communication
+#### Communication
 
 | Interface | Usage |
 |---|---|
@@ -69,13 +69,13 @@ Project/src/sensor-publishers/
 
 ---
 
-## ESP32-S3 Revision
+### ESP32-S3 Revision
 
 The embedded architecture was later redesigned around a **single ESP32-S3**.
 
 Instead of using separate microcontrollers for each sensor publisher, one ESP32-S3 performs sensor acquisition and MQTT communication.
 
-### Simulation Hardware
+#### Simulation Hardware
 
 | Device | Signal | ESP32-S3 Pin |
 |---|---|---:|
@@ -83,7 +83,7 @@ Instead of using separate microcontrollers for each sensor publisher, one ESP32-
 | Microphone | Analog Output | GPIO6 |
 | DHT11 | Data | GPIO7 |
 
-### Cirkit Designer
+#### Cirkit Designer
 
 The ESP32-S3 implementation is simulated in Cirkit Designer:
 
@@ -91,7 +91,7 @@ The ESP32-S3 implementation is simulated in Cirkit Designer:
 
 ---
 
-## FreeRTOS Architecture
+### FreeRTOS Architecture
 
 The ESP32-S3 implementation uses FreeRTOS to separate sensor acquisition from communication.
 
@@ -118,7 +118,7 @@ Microphone ─►│ Mic Task       │
                 HiveMQ Broker
 ```
 
-### Tasks
+#### Tasks
 
 | Task | Responsibility |
 |---|---|
@@ -131,9 +131,9 @@ Using a queue separates sensor acquisition from network communication and provid
 
 ---
 
-## MQTT Interface
+### MQTT Interface
 
-### Broker
+#### Broker
 
 | Parameter | Value |
 |---|---|
@@ -141,7 +141,7 @@ Using a queue separates sensor acquisition from network communication and provid
 | Port | `1883` |
 | Protocol | MQTT |
 
-### Topics
+#### Topics
 
 | Sensor | MQTT Topic | Payload |
 |---|---|---|
@@ -153,9 +153,9 @@ The same topics are used by both the original implementation and the ESP32-S3 re
 
 ---
 
-## Backend
+### Backend
 
-### MQTT Subscriber
+#### MQTT Subscriber
 
 ```text
 Project/src/client/RoomMonitorClient.py
@@ -169,7 +169,7 @@ The Python MQTT client:
 4. timestamps each measurement,
 5. stores the readings in SQLite.
 
-### Database
+#### Database
 
 ```text
 Project/db/Sensor_Reading_Records.db
@@ -181,7 +181,7 @@ Project/db/Sensor_Reading_Records.db
 | `photoresistor_readings` | light intensity |
 | `microphone_readings` | sound level |
 
-### Dashboard
+#### Dashboard
 
 ```text
 Project/src/dashboard/Flask-Server.py
@@ -191,7 +191,7 @@ The Flask dashboard reads the latest measurements from SQLite and displays the c
 
 ---
 
-## End-to-End Validation
+#### End-to-End Validation
 
 The ESP32-S3 simulation has been validated with the existing backend.
 
@@ -226,13 +226,28 @@ This validates the software architecture before transferring the design to physi
 
 ---
 
-## Repository Structure
+### Project Demo
+
+A recorded demonstration of the complete system is available in:
+
+```text
+Project/demo/
+```
+
+[View Project Demo](Project/demo/Project_Demo.mp4)
+
+---
+
+### Repository Structure
 
 ```text
 Project/
 │
 ├── db/
 │   └── Sensor_Reading_Records.db
+│
+├── demo/
+│   └── Project_Demo.mp4
 │
 ├── src/
 │   ├── client/
@@ -254,15 +269,15 @@ Project/
 
 ---
 
-## Running the Project
+### Running the Project
 
-### Create a Virtual Environment
+#### Create a Virtual Environment
 
 ```shell
 python3 -m venv .venv
 ```
 
-### Activate the Environment
+#### Activate the Environment
 
 Linux / macOS:
 
@@ -276,20 +291,20 @@ Windows:
 .venv\Scripts\activate
 ```
 
-### Install Dependencies
+#### Install Dependencies
 
 ```shell
 pip install -r requirements.txt
 ```
 
-### Start the MQTT Subscriber
+#### Start the MQTT Subscriber
 
 ```shell
 cd Project/src/client
 python3 RoomMonitorClient.py
 ```
 
-### Start the Dashboard
+#### Start the Dashboard
 
 Open another terminal:
 
@@ -300,7 +315,7 @@ python3 Flask-Server.py
 
 ---
 
-## Development Status
+### Development Status
 
 | Stage | Status |
 |---|---|
@@ -319,7 +334,7 @@ python3 Flask-Server.py
 
 ---
 
-## PCB Revision
+### PCB Revision
 
 The next revision will consolidate the sensor node onto an **ESP32-S3 carrier PCB**.
 
@@ -343,7 +358,7 @@ The PCB design will focus on:
 
 ---
 
-## Resources
+### Resources
 
 - [HiveMQ](https://www.hivemq.com/blog/implementing-mqtt-in-python/)
 - [Paho MQTT Python](https://www.emqx.com/en/blog/how-to-use-mqtt-in-python)
