@@ -1,2 +1,5 @@
 .venv/
 .vscode/
+Project/db/Sensor_Reading_Records.db
+Project/db/Sensor_Reading_Records.db-shm
+Project/db/Sensor_Reading_Records.db-wal
