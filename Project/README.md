@@ -1,316 +1,270 @@
-Sure — here’s the markdown directly so you can copy it:
-
-````markdown
 <div align="center">
   <img src="https://readme-typing-svg.demolab.com?font=Share+Tech+Mono&weight=700&size=40&pause=1000&color=00FF88&background=00000000&center=true&width=650&lines=Smart+Room+Monitoring+System" alt="Typing SVG" />
 </div>
 
 # Smart Room Monitoring System
 
-The system monitors the comfort level of a room by measuring temperature, humidity, light level, noise level, and possible occupancy/distance. The collected data is sent through MQTT to a Python client, stored in SQLite, and presented through a dashboard where users can view the current room status.
+The **Smart Room Monitoring System (SRMS)** is an IoT-based environmental monitoring platform for measuring room conditions such as temperature, humidity, ambient light, and noise.
 
-The project now contains two embedded-system implementations:
+Sensor nodes publish measurements over **MQTT** to a central broker. A Python subscriber receives the data, stores it in an **SQLite database**, and exposes the latest measurements through a **Flask-based dashboard**.
 
-1. the **original physical hardware implementation**, and
-2. a newer **single-ESP32-S3 simulation implementation** used to validate the architecture before moving to PCB design.
+The project includes:
+
+- an original multi-controller physical implementation,
+- a single-ESP32-S3 FreeRTOS simulation,
+- an existing MQTT + database + dashboard backend,
+- and a planned custom ESP32-S3 PCB implementation.
 
 ---
 
-# Physical Hardware Implementation
+## System Architecture
 
-The original physical implementation uses the following hardware.
+```text
+                    MQTT
+Sensor Nodes ─────────────────► HiveMQ Broker
+                                    │
+                                    ▼
+                           RoomMonitorClient.py
+                                    │
+                                    ▼
+                              SQLite Database
+                                    │
+                                    ▼
+                              Flask Dashboard
+```
+
+The MQTT interface is shared between the original hardware implementation and the newer ESP32-S3 architecture, allowing the backend to remain unchanged.
+
+---
+
+## Physical Implementation
+
+The original prototype uses multiple microcontrollers as independent sensor publishers.
 
 ### Hardware
 
-- ESP32 x1
-- Raspberry Pi 3 Model B v2 x1
-- Arduino WiFi Rev2 x2
+| Component | Quantity | Purpose |
+|---|---:|---|
+| ESP32 | 1 | Sensor acquisition / MQTT publisher |
+| Arduino WiFi Rev2 | 2 | Sensor acquisition / MQTT publishers |
+| Raspberry Pi 3 Model B v2 | 1 | Backend / client host |
+| KY-015 | 1 | Temperature and humidity |
+| KY-018 | 2 | Ambient light sensing |
+| KY-037 / KY-038 | 1 | Sound / noise sensing |
 
-### Sensors
+### Communication
 
-- KY-015 Combi Sensor (Temperature & Humidity) x1
-- KY-018 Photoresistor x2
-- KY-037 or KY-038 Microphone Sound Sensor x1
+| Interface | Usage |
+|---|---|
+| Wi-Fi | Sensor node connectivity |
+| MQTT | Sensor data transport |
+| SQLite | Persistent sensor storage |
+| HTTP / Flask | Dashboard interface |
 
-### Protocol
-
-- MQTT
-
-The physical implementation uses separate embedded boards for the different sensor publishers.
-
-The corresponding publisher programs are located in:
+The original publisher firmware is located in:
 
 ```text
 Project/src/sensor-publishers/
-````
-
-including:
-
-```text
-Temperature-Humidity-Sensor.ino
-photoregister.ino
-Microphone.ino
-```
-
-The MQTT data is received by the Python client and stored in the SQLite database for use by the dashboard.
-
----
-
-# ESP32-S3 Simulation Implementation
-
-As a next development stage, the sensor-node architecture was redesigned around a **single ESP32-S3**.
-
-The simulation consolidates the sensor-reading and MQTT-publishing responsibilities onto one ESP32-S3 while keeping the existing MQTT topics and backend software compatible with the original project.
-
-## Cirkit Designer Simulation
-
-[Open the ESP32-S3 Smart Room Monitoring Simulation](https://app.cirkitdesigner.com/project/668acf81-1f05-40f3-9d74-6e21bc692d80)
-
-The simulation uses:
-
-* ESP32-S3 x1
-* DHT11 / temperature-humidity sensor
-* Photoresistor module
-* Microphone sound sensor
-
-The ESP32-S3 simulation communicates with the existing Python client running on the local machine through the MQTT broker.
-
----
-
-## ESP32-S3 Pin Configuration
-
-| Sensor         | Signal | ESP32-S3 Pin |
-| -------------- | ------ | -----------: |
-| Photoresistor  | AO     |        GPIO4 |
-| Microphone     | AO     |        GPIO6 |
-| DHT11 / KY-015 | DATA   |        GPIO7 |
-
-```text
-Photoresistor AO ─────► GPIO4
-Microphone AO ────────► GPIO6
-DHT11 DATA ───────────► GPIO7
 ```
 
 ---
 
-# FreeRTOS Architecture
+## ESP32-S3 Revision
 
-The ESP32-S3 simulation uses FreeRTOS to separate sensor acquisition from MQTT communication.
+The embedded architecture was later redesigned around a **single ESP32-S3**.
 
-```text
-                     ESP32-S3
-              ┌────────────────────┐
-              │                    │
-DHT11 ───────►│ DHT Task           │
-              │        │           │
-Light ───────►│ Light Task ─────┐  │
-              │                 │  │
-Microphone ──►│ Mic Task ───────┼──┼──► FreeRTOS Queue
-              │                 │  │           │
-              └────────────────────┘           ▼
-                                          MQTT Task
-                                              │
-                                              ▼
-                                         MQTT Broker
-```
+Instead of using separate microcontrollers for each sensor publisher, one ESP32-S3 performs sensor acquisition and MQTT communication.
 
-The main tasks are:
+### Simulation Hardware
 
-* **DHT Task** — reads temperature and humidity
-* **Light Task** — reads the photoresistor
-* **Microphone Task** — reads the microphone signal
-* **MQTT Task** — handles Wi-Fi and MQTT publishing
-* **FreeRTOS Queue** — transfers sensor data between tasks
+| Device | Signal | ESP32-S3 Pin |
+|---|---|---:|
+| Photoresistor | Analog Output | GPIO4 |
+| Microphone | Analog Output | GPIO6 |
+| DHT11 | Data | GPIO7 |
 
-This architecture provides a clean transition from simulation to the planned ESP32-S3 PCB implementation.
+### Cirkit Designer
+
+The ESP32-S3 implementation is simulated in Cirkit Designer:
+
+[ESP32-S3 SRMS Simulation](https://app.cirkitdesigner.com/project/668acf81-1f05-40f3-9d74-6e21bc692d80)
 
 ---
 
-# MQTT Communication
+## FreeRTOS Architecture
+
+The ESP32-S3 implementation uses FreeRTOS to separate sensor acquisition from communication.
+
+```text
+             ┌───────────────┐
+DHT11 ──────►│ DHT Task      │
+             └───────┬───────┘
+                     │
+             ┌───────▼───────┐
+Light ──────►│ Light Task     │
+             └───────┬───────┘
+                     │
+             ┌───────▼───────┐
+Microphone ─►│ Mic Task       │
+             └───────┬───────┘
+                     │
+                     ▼
+              FreeRTOS Queue
+                     │
+                     ▼
+                MQTT Task
+                     │
+                     ▼
+                HiveMQ Broker
+```
+
+### Tasks
+
+| Task | Responsibility |
+|---|---|
+| `DHT Task` | Read temperature and humidity |
+| `Light Task` | Read and process photoresistor ADC values |
+| `Microphone Task` | Read and process microphone ADC values |
+| `MQTT Task` | Maintain network connection and publish sensor data |
+
+Using a queue separates sensor acquisition from network communication and provides a cleaner architecture for the physical ESP32-S3 implementation.
+
+---
+
+## MQTT Interface
 
 ### Broker
 
-```text
-broker.hivemq.com
-```
+| Parameter | Value |
+|---|---|
+| Broker | `broker.hivemq.com` |
+| Port | `1883` |
+| Protocol | MQTT |
 
-### Port
+### Topics
 
-```text
-1883
-```
+| Sensor | MQTT Topic | Payload |
+|---|---|---|
+| Temperature / Humidity | `sensor/ky-015/temperature-humidity/data` | `{"temperature":25.0,"humidity":60.0}` |
+| Light | `sensor/ky-018/photoresistor/data` | `{"brightness":68}` |
+| Microphone | `sensor/ky-037/microphone/data` | `{"noise":42}` |
 
-The original implementation and the ESP32-S3 simulation use the same MQTT topics.
-
-## Temperature & Humidity
-
-```text
-sensor/ky-015/temperature-humidity/data
-```
-
-Example payload:
-
-```json
-{
-  "temperature": 25.0,
-  "humidity": 60.0
-}
-```
-
-## Photoresistor
-
-```text
-sensor/ky-018/photoresistor/data
-```
-
-Example payload:
-
-```json
-{
-  "brightness": 68
-}
-```
-
-## Microphone
-
-```text
-sensor/ky-037/microphone/data
-```
-
-Example payload:
-
-```json
-{
-  "noise": 42
-}
-```
+The same topics are used by both the original implementation and the ESP32-S3 revision.
 
 ---
 
-# End-to-End Simulation
+## Backend
+
+### MQTT Subscriber
+
+```text
+Project/src/client/RoomMonitorClient.py
+```
+
+The Python MQTT client:
+
+1. connects to the HiveMQ broker,
+2. subscribes to all sensor topics,
+3. parses incoming JSON payloads,
+4. timestamps each measurement,
+5. stores the readings in SQLite.
+
+### Database
+
+```text
+Project/db/Sensor_Reading_Records.db
+```
+
+| Table | Stored Data |
+|---|---|
+| `temperature_humidity_readings` | temperature, humidity |
+| `photoresistor_readings` | light intensity |
+| `microphone_readings` | sound level |
+
+### Dashboard
+
+```text
+Project/src/dashboard/Flask-Server.py
+```
+
+The Flask dashboard reads the latest measurements from SQLite and displays the current room-monitoring status.
+
+---
+
+## End-to-End Validation
 
 The ESP32-S3 simulation has been validated with the existing backend.
 
 ```text
-Simulated Sensors
-       │
-       ▼
-    ESP32-S3
-       │
-       ▼
- FreeRTOS Tasks
-       │
-       ▼
-      MQTT
-       │
-       ▼
-broker.hivemq.com
-       │
-       ▼
-RoomMonitorClient.py
-       │
-       ▼
-     SQLite
-       │
-       ▼
- Flask Dashboard
+Cirkit Sensors
+      │
+      ▼
+ESP32-S3
+      │
+      ▼
+FreeRTOS Tasks
+      │
+      ▼
+MQTT Publisher
+      │
+      ▼
+HiveMQ
+      │
+      ▼
+Python Subscriber
+      │
+      ▼
+SQLite
+      │
+      ▼
+Flask Dashboard
 ```
 
-Sensor values changed in the simulation are successfully:
+Changing sensor values in the simulation results in corresponding updates being received by the Python client and stored in the database.
 
-1. read by the ESP32-S3,
-2. processed by the FreeRTOS tasks,
-3. published through MQTT,
-4. received by the Python MQTT client,
-5. stored in the SQLite database, and
-6. made available to the existing dashboard.
-
-This validates the single-ESP32-S3 software architecture before moving to PCB design.
+This validates the software architecture before transferring the design to physical hardware.
 
 ---
 
-# Project Progress Checklist
-
-## Original Project
-
-* [x] Requirement Analysis (diagrams)
-* [x] Connect to Data Storage: SQLite
-* [x] MQTT Subscriber: Python
-* [x] MQTT Publisher: C++
-* [x] Data Presentation: Dashboard
-
-### MQTT Topics
-
-* [x] `sensor/ky-015/temperature-humidity/data`
-* [x] `sensor/ky-018/photoresistor/data`
-* [x] `sensor/ky-037/microphone/data`
-
-## ESP32-S3 Revision
-
-* [x] Single ESP32-S3 sensor-node simulation
-* [x] FreeRTOS task implementation
-* [x] Temperature and humidity acquisition
-* [x] Photoresistor acquisition
-* [x] Microphone acquisition
-* [x] MQTT publishing
-* [x] Integration with existing Python MQTT client
-* [x] Integration with existing SQLite database
-* [x] Integration with existing dashboard
-* [x] End-to-end simulation validation
-
-## PCB Development
-
-* [ ] KiCad schematic
-* [ ] Footprint assignment
-* [ ] Component placement
-* [ ] PCB routing
-* [ ] Ground plane
-* [ ] Electrical Rule Check
-* [ ] Design Rule Check
-* [ ] 3D board verification
-* [ ] Gerber generation
-* [ ] PCB manufacturing
-* [ ] Physical ESP32-S3 hardware validation
-
----
-
-# PCB Development
-
-The next stage is to design a custom PCB around the validated single-ESP32-S3 architecture.
-
-The PCB will reproduce the main sensor connections validated in the simulation:
+## Repository Structure
 
 ```text
-GPIO4 → Photoresistor AO
-GPIO6 → Microphone AO
-GPIO7 → DHT11 DATA
+Project/
+│
+├── db/
+│   └── Sensor_Reading_Records.db
+│
+├── src/
+│   ├── client/
+│   │   └── RoomMonitorClient.py
+│   │
+│   ├── dashboard/
+│   │   └── Flask-Server.py
+│   │
+│   └── sensor-publishers/
+│       ├── Temperature-Humidity-Sensor.ino
+│       ├── photoregister.ino
+│       └── Microphone.ino
+│
+├── Technical Documentation/
+├── datasheets/
+├── analysis/
+└── README.md
 ```
-
-The planned board will provide:
-
-* ESP32-S3 DevKit integration
-* temperature/humidity sensor connection
-* photoresistor connection
-* microphone connection
-* shared power distribution
-* common ground
-* clean analog routing
-* sensor headers/connectors
-* a layout suitable for manufacturing
 
 ---
 
-# Run the Project
+## Running the Project
 
-### Create Virtual Environment
+### Create a Virtual Environment
 
 ```shell
 python3 -m venv .venv
 ```
 
-### Activate `.venv`
+### Activate the Environment
 
-Linux/macOS:
+Linux / macOS:
 
 ```shell
 source .venv/bin/activate
@@ -328,45 +282,70 @@ Windows:
 pip install -r requirements.txt
 ```
 
-### Run the Client
-
-From the `Project` directory:
+### Start the MQTT Subscriber
 
 ```shell
-cd src/client
+cd Project/src/client
 python3 RoomMonitorClient.py
 ```
 
-### Run the Dashboard
+### Start the Dashboard
 
-From the `Project` directory:
+Open another terminal:
 
 ```shell
-cd src/dashboard
+cd Project/src/dashboard
 python3 Flask-Server.py
 ```
 
 ---
 
-# Resources
+## Development Status
 
-[HiveMQ](https://www.hivemq.com/blog/implementing-mqtt-in-python/)
-
-[Py paho-mqtt](https://www.emqx.com/en/blog/how-to-use-mqtt-in-python)
-
-[Paho-mqtt Documentation](https://eclipse.dev/paho/files/paho.mqtt.python/html/client.html#paho.mqtt.client.Client.connect)
-
-[HiveMQ Security](https://www.hivemq.com/blog/mqtt-security-fundamentals-securing-mqtt-systems/) <- *IMPORTANT*
+| Stage | Status |
+|---|---|
+| Original physical prototype | ✅ Complete |
+| MQTT publishers | ✅ Complete |
+| Python MQTT subscriber | ✅ Complete |
+| SQLite storage | ✅ Complete |
+| Flask dashboard | ✅ Complete |
+| ESP32-S3 simulation | ✅ Complete |
+| FreeRTOS architecture | ✅ Complete |
+| End-to-end MQTT simulation | ✅ Complete |
+| KiCad schematic | 🚧 Next |
+| PCB layout | ⏳ Planned |
+| PCB manufacturing | ⏳ Planned |
+| Physical ESP32-S3 validation | ⏳ Planned |
 
 ---
 
-# Current Development Stage
+## PCB Revision
 
-The **original physical implementation** remains part of the project and is documented separately from the newer **single-ESP32-S3 FreeRTOS simulation**.
+The next revision will consolidate the sensor node onto an **ESP32-S3 carrier PCB**.
 
-The simulation is working end-to-end with the existing MQTT client, SQLite database, and dashboard.
+The validated signal mapping is:
 
-The next development stage is the **ESP32-S3 PCB design**.
+| Signal | ESP32-S3 |
+|---|---:|
+| Photoresistor AO | GPIO4 |
+| Microphone AO | GPIO6 |
+| DHT11 DATA | GPIO7 |
 
-```
-```
+The PCB design will focus on:
+
+- ESP32-S3 DevKit integration
+- sensor connectors
+- shared 3.3 V power distribution
+- common ground plane
+- clean analog routing
+- compact component placement
+- manufacturable KiCad layout
+
+---
+
+## Resources
+
+- [HiveMQ](https://www.hivemq.com/blog/implementing-mqtt-in-python/)
+- [Paho MQTT Python](https://www.emqx.com/en/blog/how-to-use-mqtt-in-python)
+- [Paho MQTT Documentation](https://eclipse.dev/paho/files/paho.mqtt.python/html/client.html#paho.mqtt.client.Client.connect)
+- [HiveMQ Security Fundamentals](https://www.hivemq.com/blog/mqtt-security-fundamentals-securing-mqtt-systems/)
