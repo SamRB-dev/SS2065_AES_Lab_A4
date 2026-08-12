@@ -5,8 +5,9 @@
 The system monitors the comfort level of a room by measuring temperature, humidity, light level, noise level, and possible occupancy/distance. The collected data will be sent to a web or mobile dashboard where users can see the current room status.
 
 ### Hardwares
-- ESP32 per sensor x1
+- ESP32 x1
 - Raspberry Pi 3 Model B v2 x1
+- Arduino WiFi Rev2 x2
 
 #### Sensors:
 - KY-015 Combi Sensor (Temperature & Humidity) x1
