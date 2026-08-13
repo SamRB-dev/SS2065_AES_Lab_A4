@@ -4,42 +4,48 @@
 
 # Smart Room Monitoring System
 
-The **Smart Room Monitoring System (SRMS)** is an IoT-based environmental monitoring platform for measuring room conditions such as temperature, humidity, ambient light, and noise.
+The **Smart Room Monitoring System (SRMS)** is an IoT-based environmental monitoring project for measuring room temperature, humidity, ambient light, and noise.
 
-Sensor nodes publish measurements over **MQTT** to a central broker. A Python subscriber receives the data, stores it in an **SQLite database**, and exposes the latest measurements through a **Flask-based dashboard**.
+Sensor data is published through **MQTT**, received by a Python subscriber, stored in **SQLite**, and displayed through a **Flask dashboard**.
 
-The project includes:
+The project contains three main implementation stages:
 
-- an original multi-controller physical implementation,
-- a single-ESP32-S3 FreeRTOS simulation,
-- an existing MQTT + database + dashboard backend,
-- and a planned custom ESP32-S3 PCB implementation.
+- original multi-controller physical prototype,
+- single ESP32-S3 FreeRTOS simulation,
+- custom ESP32-S3 carrier PCB design in KiCad.
+
+> **Project Status: Complete**
 
 ---
 
 ### System Architecture
 
 ```text
-                    MQTT
-Sensor Nodes ─────────────────► HiveMQ Broker
-                                    │
-                                    ▼
-                           RoomMonitorClient.py
-                                    │
-                                    ▼
-                              SQLite Database
-                                    │
-                                    ▼
-                              Flask Dashboard
+Sensors
+   │
+   ▼
+Embedded Sensor Node(s)
+   │
+   ▼
+MQTT / HiveMQ
+   │
+   ▼
+RoomMonitorClient.py
+   │
+   ▼
+SQLite Database
+   │
+   ▼
+Flask Dashboard
 ```
 
-The MQTT interface is shared between the original hardware implementation and the newer ESP32-S3 architecture, allowing the backend to remain unchanged.
+The original prototype and ESP32-S3 revision use the same MQTT interface, allowing the existing backend to remain unchanged.
 
 ---
 
-### Physical Implementation
+### Physical Prototype
 
-The original prototype uses multiple microcontrollers as independent sensor publishers.
+The original implementation uses multiple microcontrollers as independent sensor publishers.
 
 #### Hardware
 
@@ -56,12 +62,12 @@ The original prototype uses multiple microcontrollers as independent sensor publ
 
 | Interface | Usage |
 |---|---|
-| Wi-Fi | Sensor node connectivity |
+| Wi-Fi | Network connectivity |
 | MQTT | Sensor data transport |
-| SQLite | Persistent sensor storage |
-| HTTP / Flask | Dashboard interface |
+| SQLite | Persistent data storage |
+| Flask / HTTP | Dashboard interface |
 
-The original publisher firmware is located in:
+Original publisher firmware:
 
 ```text
 Project/src/sensor-publishers/
@@ -71,21 +77,19 @@ Project/src/sensor-publishers/
 
 ### ESP32-S3 Revision
 
-The embedded architecture was later redesigned around a **single ESP32-S3**.
+The embedded architecture was redesigned around a **single ESP32-S3**.
 
-Instead of using separate microcontrollers for each sensor publisher, one ESP32-S3 performs sensor acquisition and MQTT communication.
+Instead of using separate microcontrollers for each sensor publisher, one ESP32-S3 handles sensor acquisition and MQTT communication.
 
 #### Simulation Hardware
 
 | Device | Signal | ESP32-S3 Pin |
 |---|---|---:|
-| Photoresistor | Analog Output | GPIO4 |
-| Microphone | Analog Output | GPIO6 |
-| DHT11 | Data | GPIO7 |
+| KY-018 / Photoresistor | Analog Output | GPIO4 |
+| KY-037 / Microphone | Analog Output | GPIO6 |
+| KY-015 / DHT11 | Data | GPIO7 |
 
-#### Cirkit Designer
-
-The ESP32-S3 implementation is simulated in Cirkit Designer:
+### Cirkit Designer
 
 [ESP32-S3 SRMS Simulation](https://app.cirkitdesigner.com/project/668acf81-1f05-40f3-9d74-6e21bc692d80)
 
@@ -93,41 +97,22 @@ The ESP32-S3 implementation is simulated in Cirkit Designer:
 
 ### FreeRTOS Architecture
 
-The ESP32-S3 implementation uses FreeRTOS to separate sensor acquisition from communication.
+The ESP32-S3 implementation uses separate FreeRTOS tasks for sensor acquisition and MQTT communication.
 
 ```text
-             ┌───────────────┐
-DHT11 ──────►│ DHT Task      │
-             └───────┬───────┘
-                     │
-             ┌───────▼───────┐
-Light ──────►│ Light Task     │
-             └───────┬───────┘
-                     │
-             ┌───────▼───────┐
-Microphone ─►│ Mic Task       │
-             └───────┬───────┘
-                     │
-                     ▼
-              FreeRTOS Queue
-                     │
-                     ▼
-                MQTT Task
-                     │
-                     ▼
-                HiveMQ Broker
+DHT Task -----------\
+Light Task ----------> FreeRTOS Queue -> MQTT Task -> HiveMQ
+Microphone Task ----/
 ```
-
-#### Tasks
 
 | Task | Responsibility |
 |---|---|
 | `DHT Task` | Read temperature and humidity |
-| `Light Task` | Read and process photoresistor ADC values |
-| `Microphone Task` | Read and process microphone ADC values |
+| `Light Task` | Read photoresistor ADC values |
+| `Microphone Task` | Read microphone ADC values |
 | `MQTT Task` | Maintain network connection and publish sensor data |
 
-Using a queue separates sensor acquisition from network communication and provides a cleaner architecture for the physical ESP32-S3 implementation.
+The queue separates sensor acquisition from network communication and keeps the embedded architecture modular.
 
 ---
 
@@ -143,13 +128,11 @@ Using a queue separates sensor acquisition from network communication and provid
 
 #### Topics
 
-| Sensor | MQTT Topic | Payload |
+| Sensor | MQTT Topic | Example Payload |
 |---|---|---|
 | Temperature / Humidity | `sensor/ky-015/temperature-humidity/data` | `{"temperature":25.0,"humidity":60.0}` |
 | Light | `sensor/ky-018/photoresistor/data` | `{"brightness":68}` |
 | Microphone | `sensor/ky-037/microphone/data` | `{"noise":42}` |
-
-The same topics are used by both the original implementation and the ESP32-S3 revision.
 
 ---
 
@@ -161,11 +144,11 @@ The same topics are used by both the original implementation and the ESP32-S3 re
 Project/src/client/RoomMonitorClient.py
 ```
 
-The Python MQTT client:
+The Python client:
 
-1. connects to the HiveMQ broker,
+1. connects to the MQTT broker,
 2. subscribes to all sensor topics,
-3. parses incoming JSON payloads,
+3. parses incoming JSON data,
 4. timestamps each measurement,
 5. stores the readings in SQLite.
 
@@ -187,22 +170,19 @@ Project/db/Sensor_Reading_Records.db
 Project/src/dashboard/Flask-Server.py
 ```
 
-The Flask dashboard reads the latest measurements from SQLite and displays the current room-monitoring status.
+The Flask dashboard reads the latest values from SQLite and displays the current room status.
 
 ---
 
-#### End-to-End Validation
+### End-to-End Validation
 
-The ESP32-S3 simulation has been validated with the existing backend.
+The ESP32-S3 simulation was validated with the existing backend.
 
 ```text
 Cirkit Sensors
       │
       ▼
-ESP32-S3
-      │
-      ▼
-FreeRTOS Tasks
+ESP32-S3 + FreeRTOS
       │
       ▼
 MQTT Publisher
@@ -220,21 +200,55 @@ SQLite
 Flask Dashboard
 ```
 
-Changing sensor values in the simulation results in corresponding updates being received by the Python client and stored in the database.
+Sensor values changed in the simulation are successfully published through MQTT, received by the Python client, stored in the database, and made available to the dashboard.
 
-This validates the software architecture before transferring the design to physical hardware.
+---
+
+### PCB Design
+
+The final project stage was a custom **ESP32-S3 carrier PCB** designed in KiCad.
+
+![SRMS PCB](img/SRMS-PCB.png)
+
+#### PCB Features
+
+- ESP32-S3 DevKitC integration
+- KY-015, KY-018 and KY-037 sensor connectors
+- GPIO4, GPIO6 and GPIO7 sensor routing
+- shared 3.3 V power distribution
+- B.Cu ground plane
+- ESP32 antenna copper keepout
+- silkscreen pin labels
+- completed ERC and DRC checks
+- Gerber and drill-file generation
+
+#### Sensor Connections
+
+| Connector | Sensor | Pin Mapping |
+|---|---|---|
+| J1 | KY-015 | GND / 3V3 / SIG |
+| J2 | KY-018 | GND / 3V3 / SIG |
+| J3 | KY-037 | NC / 3V3 / GND / SIG |
+
+KiCad source files are available in:
+
+```text
+Project/pcb/
+```
+
+The PCB was completed as a **design exercise** and is not intended for fabrication as part of this project.
 
 ---
 
 ### Project Demo
 
-A recorded demonstration of the complete system is available in:
+A recorded demonstration is available in:
 
 ```text
 Project/demo/
 ```
 
-[View Project Demo](Project/demo/Project_Demo.mp4)
+[View Project Demo](demo/Project_Demo.mp4)
 
 ---
 
@@ -243,11 +257,23 @@ Project/demo/
 ```text
 Project/
 │
+├── README.md
+│
+├── analysis/
+├── datasheets/
 ├── db/
 │   └── Sensor_Reading_Records.db
 │
 ├── demo/
 │   └── Project_Demo.mp4
+│
+├── img/
+│   └── SRMS-PCB.png
+│
+├── pcb/
+│   ├── esp32-SRMS.kicad_pro
+│   ├── esp32-SRMS.kicad_sch
+│   └── esp32-SRMS.kicad_pcb
 │
 ├── src/
 │   ├── client/
@@ -262,22 +288,20 @@ Project/
 │       └── Microphone.ino
 │
 ├── Technical Documentation/
-├── datasheets/
-├── analysis/
-└── README.md
+└── requirements.txt
 ```
 
 ---
 
-### Running the Project
+### Run the Project
 
-#### Create a Virtual Environment
+#### Create Virtual Environment
 
 ```shell
 python3 -m venv .venv
 ```
 
-#### Activate the Environment
+#### Activate Environment
 
 Linux / macOS:
 
@@ -294,17 +318,17 @@ Windows:
 #### Install Dependencies
 
 ```shell
-pip install -r requirements.txt
+pip install -r Project/requirements.txt
 ```
 
-#### Start the MQTT Subscriber
+#### Run MQTT Client
 
 ```shell
 cd Project/src/client
 python3 RoomMonitorClient.py
 ```
 
-#### Start the Dashboard
+#### Run Dashboard
 
 Open another terminal:
 
@@ -315,7 +339,7 @@ python3 Flask-Server.py
 
 ---
 
-### Development Status
+### Project Status
 
 | Stage | Status |
 |---|---|
@@ -326,35 +350,13 @@ python3 Flask-Server.py
 | Flask dashboard | ✅ Complete |
 | ESP32-S3 simulation | ✅ Complete |
 | FreeRTOS architecture | ✅ Complete |
-| End-to-end MQTT simulation | ✅ Complete |
-| KiCad schematic | 🚧 Next |
-| PCB layout | ⏳ Planned |
-| PCB manufacturing | ⏳ Planned |
-| Physical ESP32-S3 validation | ⏳ Planned |
-
----
-
-### PCB Revision
-
-The next revision will consolidate the sensor node onto an **ESP32-S3 carrier PCB**.
-
-The validated signal mapping is:
-
-| Signal | ESP32-S3 |
-|---|---:|
-| Photoresistor AO | GPIO4 |
-| Microphone AO | GPIO6 |
-| DHT11 DATA | GPIO7 |
-
-The PCB design will focus on:
-
-- ESP32-S3 DevKit integration
-- sensor connectors
-- shared 3.3 V power distribution
-- common ground plane
-- clean analog routing
-- compact component placement
-- manufacturable KiCad layout
+| End-to-end MQTT validation | ✅ Complete |
+| KiCad schematic | ✅ Complete |
+| PCB layout and routing | ✅ Complete |
+| Ground plane and antenna keepout | ✅ Complete |
+| ERC / DRC validation | ✅ Complete |
+| Gerber generation | ✅ Complete |
+| PCB manufacturing | Out of scope |
 
 ---
 
